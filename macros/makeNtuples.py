@@ -1,4 +1,17 @@
 import ROOT
+from sys import argv
+
+try:
+	fileName = argv[1]
+	nBatch = int(argv[2])
+	nSkip = int(argv[3])
+	outFileName = fileName.split('/')[-1].split('.')[0]+'_'+str(nSkip)+'.root'
+except KeyError:
+	fileName='/mnt/hadoop/cms/store/user/paus/filefi/032/SingleElectron+Run2012A-22Jan2013-v1+AOD/3EE27797-3773-E211-B2A6-00266CF27430.root'
+	nBatch=1000
+	nSkip=0
+	outFileName = 'ntuples.root'
+
 ROOT.gROOT.SetBatch(True)
 
 ROOT.gSystem.Load('libMitAnaDataTree.so')
@@ -7,11 +20,12 @@ ROOT.gSystem.Load('libMitExampleMods.so')
 
 mithep = ROOT.mithep
 
-analysis = mithep.Analysis()
-analysis.SetOutputName('ntuples.root')
+analysis = mithep.Analysis(fileName)
+analysis.SetOutputName(outFileName)
 
-analysis.AddFile('/mnt/hadoop/cms/store/user/paus/filefi/032/SingleElectron+Run2012A-22Jan2013-v1+AOD/3EE27797-3773-E211-B2A6-00266CF27430.root')
-analysis.SetProcessNEvents(1000)
+analysis.AddFile(fileName)
+analysis.SetProcessNEvents(nBatch)
+analysis.SetSkipFirstNEvents(nSkip)
 
 hltMod = mithep.HLTMod()
 hltMod.SetBitsName('HLTBits')
