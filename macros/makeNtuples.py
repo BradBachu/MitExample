@@ -20,7 +20,7 @@ ROOT.gSystem.Load('libMitExampleMods.so')
 
 mithep = ROOT.mithep
 
-analysis = mithep.Analysis(fileName)
+analysis = mithep.Analysis()
 analysis.SetOutputName(outFileName)
 
 analysis.AddFile(fileName)
