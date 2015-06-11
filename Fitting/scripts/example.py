@@ -7,7 +7,7 @@ ROOT.gSystem.Load('libMitExampleFitting.so')
 RooFit = ROOT.RooFit
 mithep = ROOT.mithep
 
-source = ROOT.TFile.Open('tnp_flat.root')
+source = ROOT.TFile.Open('~/cms/hist/egamma/flatOutput.root')
 tree = source.Get('events')
 
 workspace = ROOT.RooWorkspace('workspace')

@@ -1,16 +1,6 @@
+from MitAna.TreeMod.bambu import mithep, analysis
 import ROOT
 from sys import argv
-
-try:
-	fileName = argv[1]
-	nBatch = int(argv[2])
-	nSkip = int(argv[3])
-	outFileName = fileName.split('/')[-1].split('.')[0]+'_'+str(nSkip)+'.root'
-except IndexError:
-	fileName='/local/snarayan/3EE27797-3773-E211-B2A6-00266CF27430.root'
-	nBatch=1000
-	nSkip=0
-	outFileName = 'ntuples.root'
 
 ROOT.gROOT.SetBatch(True)
 
@@ -19,14 +9,6 @@ ROOT.gSystem.Load('libMitPhysicsMods.so')
 ROOT.gSystem.Load('libMitExampleMods.so')
 
 mithep = ROOT.mithep
-
-print "Setting up analysis"
-analysis = mithep.Analysis()
-analysis.SetOutputName(outFileName)
-
-analysis.AddFile(fileName)
-analysis.SetProcessNEvents(nBatch)
-analysis.SetSkipFirstNEvents(nSkip)
 
 hltMod = mithep.HLTMod()
 hltMod.SetBitsName('HLTBits')
@@ -99,4 +81,3 @@ eleIdMod.Add(phoIdMod)
 phoIdMod.Add(phoIdMod2)
 phoIdMod2.Add(ntuplesMod)
 
-analysis.Run(False)

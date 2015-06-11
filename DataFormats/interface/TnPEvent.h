@@ -23,9 +23,10 @@ namespace mithep {
     TnPPair at(UInt_t) const;
     TnPPair operator[](UInt_t _idx) const { return at(_idx); }
 
-    TnPPair addNew();
+    TnPPair addNewNoVeto();
+    TnPPair addNewYesVeto();
 
-    void clear() { nPairs = 0; }
+    void clear() { nPairsNoVeto = 0; nPairsYesVeto = 0; nPairs = 0; nVertices = 0; }
 
     void bookBranches(TTree&);
     void setAddress(TTree&);
@@ -35,7 +36,10 @@ namespace mithep {
     Probe* probe_[NMAX];
 
   public:
+    UInt_t nPairsNoVeto;
+    UInt_t nPairsYesVeto;
     UInt_t nPairs;
+    UInt_t nVertices;
     Float_t tagPt[NMAX];
     Float_t tagEta[NMAX];
     Float_t tagPhi[NMAX];

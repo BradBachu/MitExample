@@ -11,6 +11,7 @@ for l in fileList:
 	fileName = l[:-1].split()[0]
 	nEvtsPerFile = int(l[:-1].split()[1])
 	nToDo=min(nEvents-nEventsProcessed,nEvtsPerFile)
+  	nBatchTmp = min(nBatch,nToDo)
 	nEventsProcessed+=nToDo
 	fileShortName=fileName.split('/')[-1].split('.')[0]
 	print "Submitting %d events from %s"%(nToDo,fileName)
@@ -22,7 +23,8 @@ for l in fileList:
 	condorSubmitFile.write('Log = /scratch5/snarayan/logs/%s_$(Process).log\n'%(fileShortName))
 	condorSubmitFile.write('Output = /scratch5/snarayan/logs/%s_$(Process).out\n'%(fileShortName))
 	condorSubmitFile.write('GetEnv=True\n')
-	condorSubmitFile.write('Arguments = "%s $(Process)"\n'%(fileName))
+	condorSubmitFile.write('Arguments = "%s %d $(Process)"\n'%(fileName,nBatchTmp))
+	condorSubmitFile.write('+AccountingGroup= "group_cmsuser.snarayan"\n')
 	if nToDo%nBatch:
 		condorSubmitFile.write('Queue %d\n'%(int(nToDo/nBatch)+1))
 	else:

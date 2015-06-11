@@ -12,13 +12,17 @@ ClassImp(mithep::NtuplesMod)
 mithep::NtuplesMod::NtuplesMod(char const* _name/* = "mithep::NtuplesMod"*/, char const* _title/* = "Flat-tree ntuples producer"*/) :
   BaseMod(_name, _title),
   fTagElectronsName("TagElectrons"),
-  fProbePhotonsName("ProbePhotons"),
+  fProbePhotonsNoVetoName("ProbePhotons"),
+  fProbePhotonsYesVetoName("ProbePhotons"),
   fTriggerObjectsName(mithep::Names::gkHltObjBrn),
   fTriggerMatchName(""),
+  fVertices(0),
   fTagElectrons(0),
-  fProbePhotons(0),
+  fProbePhotonsNoVeto(0),
+  fProbePhotonsYesVeto(0),
   fEvent(),
-  fNtuples(0)
+  fNtuples(0),
+  fPVName("GoodPrimaryVertexes")
 {
 }
 
@@ -26,9 +30,12 @@ void
 mithep::NtuplesMod::Process()
 {
   LoadEventObject(fTagElectronsName, fTagElectrons);
-  LoadEventObject(fProbePhotonsName, fProbePhotons);
+  LoadEventObject(fProbePhotonsNoVetoName, fProbePhotonsNoVeto);
+  LoadEventObject(fProbePhotonsYesVetoName, fProbePhotonsYesVeto);
+  fVertices = GetObjThisEvt<VertexOArr>(fPVName);
 
-  if (!fTagElectrons || !fProbePhotons) {
+
+  if (!fTagElectrons || !fProbePhotonsNoVeto /*|| !fProbePhotonsYesVeto*/) {
     std::cerr << "Could not find electrons in the event." << std::endl;
     return;
   }
@@ -78,24 +85,33 @@ mithep::NtuplesMod::Process()
     tags.push_back(&inEle);
   }
 
-  std::vector<Photon const*> probes;
-  for (unsigned iP(0); iP != fProbePhotons->GetEntries(); ++iP) {
-    Photon const& inPh(*fProbePhotons->At(iP));
+  std::vector<Photon const*> probesNoVeto;
+  for (unsigned iP(0); iP != fProbePhotonsNoVeto->GetEntries(); ++iP) {
+    Photon const& inPh(*fProbePhotonsNoVeto->At(iP));
 
     // apply some additional cuts to probe
 
-    probes.push_back(&inPh);
+    probesNoVeto.push_back(&inPh);
+  }
+
+  std::vector<Photon const*> probesYesVeto;
+  for (unsigned iP(0); iP != fProbePhotonsYesVeto->GetEntries(); ++iP) {
+    Photon const& inPh(*fProbePhotonsYesVeto->At(iP));
+
+    // apply some additional cuts to probe
+
+    probesYesVeto.push_back(&inPh);
   }
 
   fEvent.clear();
 
   for (Electron const* tag : tags) {
-    for (Photon const* probe : probes) {
+    for (Photon const* probe : probesNoVeto) {
       // candidates overlap in supercluster -> a same EG object
       if (tag->SCluster() == probe->SCluster())
         continue;
 
-      auto&& pair(fEvent.addNew());
+      auto&& pair(fEvent.addNewNoVeto());
 
       pair.first.pt = tag->Pt();
       pair.first.eta = tag->Eta();
@@ -114,6 +130,35 @@ mithep::NtuplesMod::Process()
       pair.second.energy = probe->E();
     }
   }
+
+  for (Electron const* tag : tags) {
+    for (Photon const* probe : probesYesVeto) {
+      // candidates overlap in supercluster -> a same EG object
+      if (tag->SCluster() == probe->SCluster())
+        continue;
+
+      auto&& pair(fEvent.addNewYesVeto());
+
+      pair.first.pt = tag->Pt();
+      pair.first.eta = tag->Eta();
+      pair.first.phi = tag->Phi();
+      pair.first.px = tag->Px();
+      pair.first.py = tag->Py();
+      pair.first.pz = tag->Pz();
+      pair.first.energy = tag->E();
+
+      pair.second.pt = probe->Pt();
+      pair.second.eta = probe->Eta();
+      pair.second.phi = probe->Phi();
+      pair.second.px = probe->Px();
+      pair.second.py = probe->Py();
+      pair.second.pz = probe->Pz();
+      pair.second.energy = probe->E();
+    }
+  }
+
+
+  fEvent.nVertices = (UInt_t)fVertices->GetEntries();
 
   fNtuples->Fill();
 }

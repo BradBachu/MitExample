@@ -3,12 +3,13 @@
 
 class RooDataSet;
 class RooArgSet;
+class RooRealVar;
 class TTree;
 
 namespace mithep {
-  
   class FittingUtils {
-    static RooDataSet* createDataSet(TTree*, RooArgSet*, char const* name = "dataset", char const* title = "T&P dataset");
+    public:
+      static RooDataSet* createDataSet(TTree*, RooRealVar*, char const* name = "dataset", char const* title ="data with mass");
   };
 
 }

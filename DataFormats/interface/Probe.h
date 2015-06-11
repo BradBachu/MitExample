@@ -18,7 +18,6 @@ namespace mithep {
     Float_t& py;
     Float_t& pz;
     Float_t& energy;
-
   private:
     Probe(); // hide default constructor
   };

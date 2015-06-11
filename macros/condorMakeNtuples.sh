@@ -2,10 +2,10 @@
 
 fileName=$1
 scramDir='/home/snarayan/cms/cmssw/040/CMSSW_7_4_0'
-outDir='/mnt/hscratch/snarayan/data/SingleElectron+Run2012A-22Jan2013-v1+AOD'
+outDir='/scratch5/snarayan/data/SingleElectron+Run2012A-22Jan2013-v1+AOD'
 rootDir='/home/snarayan/cms/root'
-nBatch=1000
-let nSkip=${2}*nBatch
+nBatch=${2}
+let nSkip=${3}*nBatch
 
 cd $scramDir
 eval `scramv1 runtime -sh`

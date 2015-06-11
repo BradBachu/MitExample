@@ -10,6 +10,8 @@
 #include <iostream>
 
 mithep::TnPEvent::TnPEvent() :
+  nPairsNoVeto(0),
+  nPairsYesVeto(0),
   nPairs(0)
 {
   for (unsigned iP(0); iP != NMAX; ++iP) {
@@ -36,9 +38,20 @@ mithep::TnPEvent::at(UInt_t _idx) const
 }
 
 mithep::TnPEvent::TnPPair
-mithep::TnPEvent::addNew()
+mithep::TnPEvent::addNewNoVeto()
 {
-  TnPPair pair(*tag_[nPairs], *probe_[nPairs]);
+  TnPPair pair(*tag_[nPairsNoVeto], *probe_[nPairsNoVeto]);
+  ++nPairsNoVeto;
+  ++nPairs;
+
+  return pair;
+}
+
+mithep::TnPEvent::TnPPair
+mithep::TnPEvent::addNewYesVeto()
+{
+  TnPPair pair(*tag_[nPairsNoVeto+nPairsYesVeto], *probe_[nPairsNoVeto+nPairsYesVeto]);
+  ++nPairsYesVeto;
   ++nPairs;
 
   return pair;
@@ -47,7 +60,10 @@ mithep::TnPEvent::addNew()
 void
 mithep::TnPEvent::bookBranches(TTree& _tree)
 {
-  _tree.Branch("nPairs", &nPairs, "nPairs/i");
+  _tree.Branch("nPairs", &nPairsNoVeto, "nPairs/i");
+  _tree.Branch("nPairsNoVeto", &nPairsNoVeto, "nPairsNoVeto/i");
+  _tree.Branch("nPairsYesVeto", &nPairsYesVeto, "nPairsYesVeto/i");
+  _tree.Branch("nVertices", &nVertices, "nVertices/i");
 
   _tree.Branch("tag.pt", tagPt, "pt[nPairs]/F");
   _tree.Branch("tag.eta", tagEta, "eta[nPairs]/F");
@@ -69,7 +85,10 @@ void
 mithep::TnPEvent::setAddress(TTree& _tree)
 {
   _tree.SetBranchAddress("nPairs", &nPairs);
-
+  _tree.SetBranchAddress("nPairsNoVeto", &nPairsNoVeto);
+  _tree.SetBranchAddress("nPairsYesVeto", &nPairsYesVeto);
+  _tree.SetBranchAddress("nVertices", &nVertices);
+  
   std::vector<TString> notFound;
 
   if (_tree.GetBranchStatus("tag.pt"))
