@@ -138,7 +138,7 @@ return h_mass;
 //gives me the mass histogram under a cut applied 
 template<typename T> TH1F* Mass(TString variable, Double_t xMin , Double_t xMax , const Char_t *Cut_or_Nah , Int_t ElectronVeto_or_nah)
 {
-	cout << "Getting mass" << endl;
+	cout << " mass" << endl;
 	// Start by looping over the Photon + Jet 
 	TFile *inclusive = new TFile("/home/bbachu/cms/cmssw/040/CMSSW_7_4_0/src/Tag_and_Probe/skimmed.root");
 	TTree *tree = new TTree();
