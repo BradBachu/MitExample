@@ -135,12 +135,61 @@ return h_mass;
 */
 
 
+
+
+// //fit for Z mass
+// void Fit_for_Z(TH1F* h)
+// {
+// 	//TCanvas *c2 = new TCanvas();
+// 	//observable for the pdf
+// 	RooRealVar *Z_mass = new RooRealVar("Z_mass" , "Z_mass" , 0, 300);
+	
+// 	//create the Breit Wigner function SIGNAL
+// 	RooRealVar *m = new RooRealVar("m", "m", 91.1876 , 87 , 95);
+// 	//m->setConstant(kTrue);
+// 	RooRealVar *g = new RooRealVar("g", "g", 200, 0, 6000);
+// 	RooBreitWigner *Z_Peak = new RooBreitWigner("Z_Peak", "Z_Peak", *Z_mass, *m , *g);
+
+// 	//create the Exp for the BACKGROUND
+// 	RooRealVar *a = new RooRealVar("a","a",0 ,0 ,-3 );
+// 	RooExponential *bkg = new RooExponential("bkg", "bkg", *Z_mass, *a );
+
+// 	RooRealVar *nsig = new RooRealVar("nsig", "signal fraction", 25000 , 0.  , 26495.);
+// 	RooRealVar *nbkg = new RooRealVar("nbkg", "background fraction" , 5000 ,  0.  , 26495.);
+
+// 	RooAddPdf *model = (RooAddPdf*) new RooAddPdf("model" , "model" , RooArgList(*Z_Peak, *bkg) , RooArgList(*nsig, *nbkg));
+
+// 	//make the histogram for the fitting
+// 	RooDataHist *data_Z_mass = (RooDataHist*) new RooDataHist("data", "dataset with mass", *Z_mass, h);
+
+// 	//fit the model to the data
+// 	model->fitTo(*data_Z_mass , Extended(kTRUE));
+
+// 	//plot pdf and data overlaid
+// 	RooPlot *xframe = Z_mass->frame();
+// 	data_Z_mass->plotOn(xframe);
+// 	model->plotOn(xframe);
+// 	model->plotOn(xframe, Components(*Z_Peak), LineStyle(kDashed), LineColor(kRed));
+// 	model->plotOn(xframe, Components(*bkg), LineStyle(kDotted), LineColor(kGreen));
+// 	//xframe->Draw();
+
+// 	//what is the structure of my composite model
+// 	model->printCompactTree();
+
+// 	RooArgSet *params = model->getVariables();
+// 	//get the number of entries in the BreitWeigner Distribution
+// 	RooRealVar *integral_BW = (RooRealVar*) params->find("nsig");
+// 	Double_t Integral_BW = integral_BW->getValV();
+// 	cout <<"Integral over BreitWeigner = " << Integral_BW << endl;
+// }
+
+
 //gives me the mass histogram under a cut applied 
-template<typename T> TH1F* Mass(TString variable, Double_t xMin , Double_t xMax , const Char_t *Cut_or_Nah , Int_t ElectronVeto_or_nah)
+TH1F* Mass(TString variable, Double_t xMin , Double_t xMax , const Char_t *Cut_or_Nah , Int_t ElectronVeto_or_nah)
 {
-	cout << " mass" << endl;
+	cout << "Getting mass" << endl;
 	// Start by looping over the Photon + Jet 
-	TFile *inclusive = new TFile("/home/bbachu/cms/cmssw/040/CMSSW_7_4_0/src/Tag_and_Probe/skimmed.root");
+	TFile *inclusive = new TFile("/home/snarayan/cms/hist/egamma_v3/t2mit/filefi/032/SingleElectron+Run2012A-22Jan2013-v1+AOD/flattened.root");
 	TTree *tree = new TTree();
 	tree = (TTree*) inclusive->FindObjectAny("events");
 
@@ -156,32 +205,44 @@ template<typename T> TH1F* Mass(TString variable, Double_t xMin , Double_t xMax 
 	// tree->SetBranchAddress("electronVetoApplied", &electronVetoApplied);
 
 	//set up the variable to cut over
-	T x;
-	tree->SetBranchAddress(variable, &x);
+	// T x;
+	// tree->SetBranchAddress(variable, &x);
 	
 	//create hist to store the mass
-	TH1F *h_mass = new TH1F( "h_mass","Invariant Mass", 100, 0, 200);
+	// TH1F *h_mass = new TH1F( "h_mass","Invariant Mass", 100, 0, 200);
+	TH1F *h_mass = new TH1F("h_mass","h_mass",100,0,200);
 	//read all entries and fill the hist
-	Long64_t nEvents = (Int_t) tree->GetEntries();
-
-	for (Long64_t entry = 0; entry < nEvents; entry++ )
-	{
-		tree->GetEntry(entry);		
-		//check if we should apply elecron veto
-		if( ElectronVeto_or_nah != electronVetoApplied ) continue;
-			//check if CUT was specified, if it was start applying cut over range
-			if ( Cut_or_Nah == "Cut")
-			{
-				if( !((xMin < x) && (x < xMax)) ) continue;
-				h_mass->Fill(mass);
-			} 
-			else
-			{
-				h_mass->Fill(mass);
-			}
-		
+	if (ElectronVeto_or_nah==0){
+		if (Cut_or_Nah == "Cut")
+			tree->Draw("mass>>h_mass",TString::Format("%f < %s && %s < %f && electronVetoApplied==0",xMin,variable.Data(),variable.Data(),xMax),"goff");
+		else
+			tree->Draw("mass>>h_mass","electronVetoApplied==0","goff");
+	} else {
+		if (Cut_or_Nah == "Cut")
+			tree->Draw("mass>>h_mass",TString::Format("%f < %s && %s < %f && electronVetoApplied==1",xMin,variable.Data(),variable.Data(),xMax),"goff");
+		else
+			tree->Draw("mass>>h_mass","electronVetoApplied==1","goff");
 	}
-	cout << "exit loop" << endl;
+	// Long64_t nEvents = (Int_t) tree->GetEntries();
+
+	// for (Long64_t entry = 0; entry < nEvents; entry++ )
+	// {
+	// 	tree->GetEntry(entry);		
+	// 	//check if we should apply elecron veto
+	// 	if( ElectronVeto_or_nah != electronVetoApplied ) continue;
+	// 		//check if CUT was specified, if it was start applying cut over range
+	// 		if ( Cut_or_Nah == "Cut")
+	// 		{
+	// 			if( !((xMin < x) && (x < xMax)) ) continue;
+	// 			h_mass->Fill(mass);
+	// 		} 
+	// 		else
+	// 		{
+	// 			h_mass->Fill(mass);
+	// 		}
+		
+	// }
+	// cout << "exit loop" << endl;
 
 	//TCanvas *cMass = new TCanvas();
 	//h_mass->Draw();
@@ -189,89 +250,43 @@ template<typename T> TH1F* Mass(TString variable, Double_t xMin , Double_t xMax 
 return h_mass;
 }
 
-//fit for Z mass
-void Fit_for_Z(TH1F* h)
-{
-	//TCanvas *c2 = new TCanvas();
-	//observable for the pdf
-	RooRealVar *Z_mass = new RooRealVar("Z_mass" , "Z_mass" , 0, 300);
-	
-	//create the Breit Wigner function SIGNAL
-	RooRealVar *m = new RooRealVar("m", "m", 91.1876 , 87 , 95);
-	//m->setConstant(kTrue);
-	RooRealVar *g = new RooRealVar("g", "g", 200, 0, 6000);
-	RooBreitWigner *Z_Peak = new RooBreitWigner("Z_Peak", "Z_Peak", *Z_mass, *m , *g);
+// //this model uses the extended likelihood formalism and a composite pdf
+// //the composite pdf is composed of a Decaying exponential and BreitWeigner Distribution
+// RooAbsPdf* build_model(RooRealVar& mass)
+// {
+// 	//create the Breit Wigner function SIGNAL
+// 	RooRealVar *m = new RooRealVar("m", "m", 91 , 87 , 95);
+// 	//m->setConstant(kTrue);
+// 	RooRealVar *g = new RooRealVar("g", "g", 200, 0, 6000);
+// 	RooBreitWigner *Z_Peak = new RooBreitWigner("Z_Peak", "Z_Peak", mass, *m , *g);
 
-	//create the Exp for the BACKGROUND
-	RooRealVar *a = new RooRealVar("a","a",0 ,0 ,-3 );
-	RooExponential *bkg = new RooExponential("bkg", "bkg", *Z_mass, *a );
+// 	//create the Exp for the BACKGROUND
+// 	RooRealVar *a = new RooRealVar("a","a",0 ,0 ,-3 );
+// 	RooExponential *bkg = new RooExponential("bkg", "bkg", mass, *a );
 
-	RooRealVar *nsig = new RooRealVar("nsig", "signal fraction", 25000 , 0.  , 26495.);
-	RooRealVar *nbkg = new RooRealVar("nbkg", "background fraction" , 5000 ,  0.  , 26495.);
+// 	RooRealVar *nsig = new RooRealVar("nsig", "signal fraction", 25000 , 0.  , 26495.);
+// 	RooRealVar *nbkg = new RooRealVar("nbkg", "background fraction" , 5000 ,  0.  , 26495.);
 
-	RooAddPdf *model = (RooAddPdf*) new RooAddPdf("model" , "model" , RooArgList(*Z_Peak, *bkg) , RooArgList(*nsig, *nbkg));
+// 	RooAddPdf *model = (RooAddPdf*) new RooAddPdf("model" , "model" , RooArgList(*Z_Peak, *bkg) , RooArgList(*nsig, *nbkg));
 
-	//make the histogram for the fitting
-	RooDataHist *data_Z_mass = (RooDataHist*) new RooDataHist("data", "dataset with mass", *Z_mass, h);
+// return model;
 
-	//fit the model to the data
-	model->fitTo(*data_Z_mass , Extended(kTRUE));
+// }
 
-	//plot pdf and data overlaid
-	RooPlot *xframe = Z_mass->frame();
-	data_Z_mass->plotOn(xframe);
-	model->plotOn(xframe);
-	model->plotOn(xframe, Components(*Z_Peak), LineStyle(kDashed), LineColor(kRed));
-	model->plotOn(xframe, Components(*bkg), LineStyle(kDotted), LineColor(kGreen));
-	//xframe->Draw();
-
-	//what is the structure of my composite model
-	model->printCompactTree();
-
-	RooArgSet *params = model->getVariables();
-	//get the number of entries in the BreitWeigner Distribution
-	RooRealVar *integral_BW = (RooRealVar*) params->find("nsig");
-	Double_t Integral_BW = integral_BW->getValV();
-	cout <<"Integral over BreitWeigner = " << Integral_BW << endl;
-}
-
-//this model uses the extended likelihood formalism and a composite pdf
-//the composite pdf is composed of a Decaying exponential and BreitWeigner Distribution
-RooAbsPdf* build_model(RooRealVar& mass)
-{
-	//create the Breit Wigner function SIGNAL
-	RooRealVar *m = new RooRealVar("m", "m", 91 , 87 , 95);
-	//m->setConstant(kTrue);
-	RooRealVar *g = new RooRealVar("g", "g", 200, 0, 6000);
-	RooBreitWigner *Z_Peak = new RooBreitWigner("Z_Peak", "Z_Peak", mass, *m , *g);
-
-	//create the Exp for the BACKGROUND
-	RooRealVar *a = new RooRealVar("a","a",0 ,0 ,-3 );
-	RooExponential *bkg = new RooExponential("bkg", "bkg", mass, *a );
-
-	RooRealVar *nsig = new RooRealVar("nsig", "signal fraction", 25000 , 0.  , 26495.);
-	RooRealVar *nbkg = new RooRealVar("nbkg", "background fraction" , 5000 ,  0.  , 26495.);
-
-	RooAddPdf *model = (RooAddPdf*) new RooAddPdf("model" , "model" , RooArgList(*Z_Peak, *bkg) , RooArgList(*nsig, *nbkg));
-
-return model;
-
-}
-
-void Print_chiSquare(RooPlot *frame, const char* histname , const char* pdfname)
-{	
-	Double_t ChiSquare;
-	ChiSquare =  frame->chiSquare( pdfname , histname , 8);
-	cout << "ChiSquare result from " << pdfname << " = "  << ChiSquare << endl;
-}
+// void Print_chiSquare(RooPlot *frame, const char* histname , const char* pdfname)
+// {	
+// 	Double_t ChiSquare;
+// 	ChiSquare =  frame->chiSquare( pdfname , histname , 8);
+// 	cout << "ChiSquare result from " << pdfname << " = "  << ChiSquare << endl;
+// }
 
 //this model will use a convolution of the BreitWeigner Distribution with the Crystal Ball Distribution as the fit for the Z peak
-RooAddPdf* build_model_2(RooRealVar& mass)
+RooAddPdf* build_model_2(RooRealVar& mass , Double_t nEntries)
 {
 	cout << "Building Model to work with Detector Resolution" << endl ;
 	//PHYSICS MODEL
 	//create the Breit Wigner function for the Z peak
-	RooRealVar *m = new RooRealVar("m", "m", 91 , 87 , 95);
+	RooRealVar *m = new RooRealVar("m", "m", 91 , 80 , 100);
 	RooRealVar *g = new RooRealVar("g", "g", 200, 0, 6000);
 	RooBreitWigner *Z_Peak_model = new RooBreitWigner("Z_Peak_model", "Z Peak Model", mass, *m , *g);
 
@@ -293,21 +308,24 @@ RooAddPdf* build_model_2(RooRealVar& mass)
 	RooRealVar *a = new RooRealVar("a","a",0 ,0 ,-3 );
 	RooExponential *bkg = new RooExponential("bkg", "bkg", mass, *a );
 
-	RooRealVar *nsig = new RooRealVar("nsig", "signal fraction", 25000, 0.  , 26495);
-	RooRealVar *nbkg = new RooRealVar("nbkg", "background fraction" , 5000 ,  0.  , 26495.);
+	RooRealVar *nsig = new RooRealVar("nsig", "signal fraction", 1100000, 0.  , nEntries);
+	RooRealVar *nbkg = new RooRealVar("nbkg", "background fraction" , 5000 ,  0.  , nEntries);
 
-	RooAddPdf *model = (RooAddPdf*) new RooAddPdf("model" , "model" , RooArgList(*MODELxRES, *bkg) , RooArgList(*nsig , *nbkg ));
+	RooRealVar *sigFrac = new RooRealVar("sigFrac","signal fraction",.5,0,1);
+
+	RooAddPdf *model = (RooAddPdf*) new RooAddPdf("model" , "model" , RooArgList(*MODELxRES, *bkg) , RooArgList(*nsig , *nbkg  ));
 
 return model;
 }
 
-Double_t Fit_model_to_data_and_integrate(TH1F* h)
+Double_t Fit_model_to_data_and_integrate(TH1F* h , TString variable , Double_t x1 , Double_t x2)
 {
 	
 	//observable for the pdf
 	//RooRealVar *Z_mass = new RooRealVar("Z_mass" , "Z_mass" , 0, 300);
 	RooRealVar mass("mass" , "mass" , 0, 300);
-	RooAbsPdf *model = build_model_2(mass);
+	Double_t nEntries = h->Integral();
+	RooAbsPdf *model = build_model_2(mass , nEntries);
 	
 	//make the histogram for the fitting
 	RooDataHist *data_mass = (RooDataHist*) new RooDataHist("data", "dataset with mass", mass, h);
@@ -315,15 +333,26 @@ Double_t Fit_model_to_data_and_integrate(TH1F* h)
 	//fit the model to the data
 	model->fitTo(*data_mass , Extended(kTRUE) , Minimizer("Minuit2", "Migrad"));
 
-	//TCanvas *c3 = new TCanvas();
+	// std::stringstream s;
+	// s << "Mass Fit under cut" << x1 << " < " << variable << " < " << x2 ;
+	// const char* str = s.str().c_str();
+
+	TString s ="" ;
+	s+= x1 ;
+	s+= " < " ;
+	s+= variable ;
+	s+= " < " ;
+	s+= x2 ;
+	TCanvas *c3 = new TCanvas();
 	//plot pdf and data overlaid
-	RooPlot *xframe = mass.frame();
+	RooPlot *xframe = mass.frame(Title(s));
+	//xframe->SetNameTitle(  "LALALA" , "LALALA" );
 	data_mass->plotOn(xframe);
 	model->plotOn(xframe, Name("model"));
 	//model->plotOn(xframe, Components("*Z_Peak_model"), LineStyle(kDashed), LineColor(kRed));
 	//model->plotOn(xframe, Components("*Detec_Res"), LineStyle(kDashed), LineColor(kYellow));
 	//model->plotOn(xframe, Components("*bkg"), LineStyle(kDotted), LineColor(kGreen));
-	//xframe->Draw();
+	xframe->Draw();
 
 	//what is the structure of my composite model
 	model->printCompactTree();
@@ -334,9 +363,13 @@ Double_t Fit_model_to_data_and_integrate(TH1F* h)
 	Double_t Integral_BWxCB = integral_BWxCB->getValV();
 	cout <<"Integral over BreitWeigner = " << Integral_BWxCB << endl;
 
-	Print_chiSquare( xframe , "h_data" , "model");
-
+	//Print_chiSquare( xframe , "h_data" , "model");
 	xframe->Print("v");
+
+	// // incase we decide to do integrals instead
+	// RooAbsReal* integral_over_CBxBW = model->createIntegral(*mass );
+	// Double_t Integral_BWxCB = integral_over_CBxBW->getVal();
+
 
 return Integral_BWxCB;
 }
@@ -348,21 +381,21 @@ Double_t Get_Fake_Rate(TString variable, Double_t x1 ,Double_t x2 )
 	TH1F* h_cut_on_probe_electron_ID;
 	if (variable=="nVertices"){
 		//produce histogram with cut on probe
-		h_cut_on_probe = (TH1F*) Mass<UInt_t>( variable,  x1 , x2 , "Cut" , 0 );
+		h_cut_on_probe = (TH1F*) Mass( variable,  x1 , x2 , "Cut" , 0 );
 		//produce histogram with cut on probe and also electron ID
-		h_cut_on_probe_electron_ID = (TH1F*) Mass<UInt_t>( variable , x1, x2, "Cut", 1 );
+		h_cut_on_probe_electron_ID = (TH1F*) Mass( variable , x1, x2, "Cut", 1 );
 	}
-	else {
+	else {	RooRealVar *sigFrac = new RooRealVar("sigFrac","signal fraction",.5,0,1);
 		//produce histogram with cut on probe
-		h_cut_on_probe = (TH1F*) Mass<Float_t>( variable,  x1 , x2 , "Cut" , 0 );
+		h_cut_on_probe = (TH1F*) Mass( variable,  x1 , x2 , "Cut" , 0 );
 		//produce histogram with cut on probe and also electron ID
-		h_cut_on_probe_electron_ID = (TH1F*) Mass<Float_t>( variable , x1, x2, "Cut", 1 );
+		h_cut_on_probe_electron_ID = (TH1F*) Mass( variable , x1, x2, "Cut", 1 );
 	}
 	//now I have two histograms, one with Electron ID applied and one without
 
 	//get the integrals required from both histograms
-	Double_t integral_phoID = Fit_model_to_data_and_integrate(h_cut_on_probe);
-	Double_t integral_phoID_and_electronID = Fit_model_to_data_and_integrate(h_cut_on_probe_electron_ID);
+	Double_t integral_phoID = Fit_model_to_data_and_integrate(h_cut_on_probe ,  variable ,  x1 ,  x2);
+	Double_t integral_phoID_and_electronID = Fit_model_to_data_and_integrate(h_cut_on_probe_electron_ID ,  variable+TString("Veto") ,  x1 ,  x2);
 
 	cout << "Calculating fake rate for " << variable << endl;
 	//get fake rate
@@ -379,9 +412,9 @@ TH1F* fake_rate_phase_space(TString variable , Int_t nbin , Double_t xMin , Doub
 	//create a histogram to represent the fake rate versus variable
 	TH1F* hEfficiency = (TH1F*) new TH1F(variable, "Efficiency as a function of " + variable, nbin , xMin , xMax);
 	//loop over bins of the variable in question to plot efficiency 
-	for( Int_t i = 0 ; i < nbin-1 ; i++)
+	for( Int_t i = 0 ; i < nbin ; i++)
 	{
-		Double_t fake_rate = Get_Fake_Rate( variable, xMin + (i*increment) , increment + (i*increment) );
+		Double_t fake_rate = Get_Fake_Rate( variable, xMin + (i*increment) , xMin + increment + (i*increment) );
 		hEfficiency->SetBinContent( i+1 , fake_rate);
 	}
 	//hEfficiency->Draw();
@@ -423,9 +456,19 @@ void e_gamma_tandp()
 
 	//make phase space histograms
 	cout<< "About to draw phase space diagrams" << endl;
-	Draw_phase_space( "p_T" , 10 , 0 , 250 );
-	Draw_phase_space("eta", 10, -2.5, 2.5 );
-	Draw_phase_space("nVertices" , 10 , 0 , 30);
+//	Draw_phase_space( "p_T" , 10 , 0 , 250 );
+//	Draw_phase_space("eta", 10, -2.5, 2.5 );
+//	Draw_phase_space("nVertices" , 10 , 0 , 30);
 	cout <<"End main function" << endl;
+
+	//compute the total efficiency
+	TH1F* h_total_without_electron_veto = (TH1F*) Mass( "p_T",  0 , 10 , "" , 0 );
+	TH1F* h_total_with_electron_veto = (TH1F*) Mass( "p_T",  0 , 10 , " " , 1 );
+	Double_t Integral_with_veto = Fit_model_to_data_and_integrate(h_total_with_electron_veto ,"", 1 ,10 );
+	Double_t Integral_without_veto = Fit_model_to_data_and_integrate(h_total_without_electron_veto , "" , 1 ,10);
+	cout << "Integral with veto = " << Integral_with_veto << endl;
+	cout << "Integral without veto = " << Integral_without_veto << endl;
+	Double_t Total_Efficiency = Integral_with_veto /Integral_without_veto ;	
+	cout <<" Total_Efficiency Efficiency = " << Total_Efficiency << endl ;
 
 }
