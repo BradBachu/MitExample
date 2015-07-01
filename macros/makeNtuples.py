@@ -5,9 +5,10 @@ try:
 	fileName = argv[1]
 	nBatch = int(argv[2])
 	nSkip = int(argv[3])
-	outFileName = fileName.split('/')[-1].split('.')[0]+'_'+str(nSkip)+'.root'
+	outFileName = '~/cms/hist/egammaLocal_v4/'+fileName.split('/')[-1].split('.')[0]+'_'+str(nSkip)+'.root'
 except IndexError:
-	fileName='/local/snarayan/3EE27797-3773-E211-B2A6-00266CF27430.root'
+  #	fileName='/local/snarayan/3EE27797-3773-E211-B2A6-00266CF27430.root'
+  fileName='/mnt/hadoop/cms/store/user/paus/filefi/032/SingleElectron+Run2012A-22Jan2013-v1+AOD/06BA13DA-4573-E211-8F2B-003048D3C880.root'
 	nBatch=1000
 	nSkip=0
 	outFileName = 'ntuples.root'
@@ -66,6 +67,7 @@ phoIdMod.SetOutputName('MediumPhotonsNoEVeto')
 phoIdMod.SetIDType('EgammaMedium')
 phoIdMod.SetIsoType('MITPUCorrected')
 phoIdMod.SetApplyElectronVeto(False)
+phoIdMod.SetApplyElectronVetoConvRecovery(False)
 phoIdMod.SetApplyPixelSeed(False)
 phoIdMod.SetApplyConversionId(False)
 phoIdMod.SetApplyFiduciality(True)
@@ -77,8 +79,9 @@ phoIdMod2.SetPtMin(10.0)
 phoIdMod2.SetOutputName('MediumPhotonsYesEVeto')
 phoIdMod2.SetIDType('EgammaMedium')
 phoIdMod2.SetIsoType('MITPUCorrected')
-phoIdMod2.SetApplyElectronVeto(True)
-phoIdMod2.SetApplyPixelSeed(False)
+phoIdMod2.SetApplyElectronVeto(False)
+phoIdMod2.SetApplyElectronVetoConvRecovery(False)
+phoIdMod2.SetApplyPixelSeed(True)
 phoIdMod2.SetApplyConversionId(False)
 phoIdMod2.SetApplyFiduciality(True)
 phoIdMod2.SetIsData(True)

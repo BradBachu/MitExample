@@ -35,7 +35,7 @@ mithep::NtuplesMod::Process()
   fVertices = GetObjThisEvt<VertexOArr>(fPVName);
 
 
-  if (!fTagElectrons || !fProbePhotonsNoVeto /*|| !fProbePhotonsYesVeto*/) {
+  if (!fTagElectrons || !fProbePhotonsNoVeto || !fProbePhotonsYesVeto) {
     std::cerr << "Could not find electrons in the event." << std::endl;
     return;
   }
@@ -136,6 +136,8 @@ mithep::NtuplesMod::Process()
       // candidates overlap in supercluster -> a same EG object
       if (tag->SCluster() == probe->SCluster())
         continue;
+
+      // printf("Adding yes probe\n");
 
       auto&& pair(fEvent.addNewYesVeto());
 

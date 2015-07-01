@@ -13,8 +13,8 @@
 using namespace mithep;
 using namespace RooFit;
 
-void makeFlatNtuples(TString fileName = "/home/snarayan/cms/hist/egamma/t2mit/filefi/032/SingleElectron+Run2012A-22Jan2013-v1+AOD/ntuple.root",
-                     TString fileOutName = "/home/snarayan/cms/hist/egamma/t2mit/filefi/032/SingleElectron+Run2012A-22Jan2013-v1+AOD/flattened.root") {
+void makeFlatNtuples(TString fileName = "/home/snarayan/cms/hist/egamma_v3/t2mit/filefi/032/SingleElectron+Run2012A-22Jan2013-v1+AOD/ntuple.root",
+                     TString fileOutName = "/home/snarayan/cms/hist/egamma_v3/t2mit/filefi/032/SingleElectron+Run2012A-22Jan2013-v1+AOD/flattened.root") {
   TFile * fIn = new TFile(fileName);
   TTree * events = (TTree*)fIn->FindObjectAny("events");
   int nEvents = events->GetEntries();
@@ -47,12 +47,14 @@ void makeFlatNtuples(TString fileName = "/home/snarayan/cms/hist/egamma/t2mit/fi
   Float_t mass; 
   Float_t eta;
   Float_t p_T;
+  Float_t phi;
   Int_t electronVetoApplied;
   TFile* fOut = new TFile(fileOutName,"RECREATE");
   TTree * tOut = new TTree("eventsSkimmed","eventsSkimmed");
   tOut->Branch("mass",&mass);
   tOut->Branch("eta",&eta);
   tOut->Branch("p_T",&p_T);
+  tOut->Branch("phi",&phi);
   tOut->Branch("nVertices",&nVertices);
   tOut->Branch("electronVetoApplied",&electronVetoApplied);
   for (unsigned i=0;i <nEvents; i++) {
@@ -61,8 +63,10 @@ void makeFlatNtuples(TString fileName = "/home/snarayan/cms/hist/egamma/t2mit/fi
       TLorentzVector vTag(tagpx[j],tagpy[j],tagpz[j],tagenergy[j]);
       TLorentzVector vProbe(probepx[j],probepy[j],probepz[j],probeenergy[j]);
       mass = (vTag+vProbe).M();
+      if (mass<0. || mass > pow(10,10)) continue; // probably some stupid shit
       eta = TMath::Log((probeenergy[j]+probepz[j])/(probeenergy[j]-probepz[j]))/2.;
       p_T = TMath::Sqrt(probepx[j]*probepx[j] + probepy[j]*probepy[j]);
+      phi = TMath::ATan(probepy[j]/probepx[j]);
       if (j >= nPairsNoVeto) {
         electronVetoApplied = 1;
       } else {

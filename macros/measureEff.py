@@ -1,6 +1,18 @@
-from MitAna.TreeMod.bambu import mithep, analysis
 import ROOT
 from sys import argv
+
+try:
+	fileName = argv[1]
+	nBatch = int(argv[2])
+	nSkip = int(argv[3])
+	outFileName = '~/cms/hist/egammaLocal_v4/'+fileName.split('/')[-1].split('.')[0]+'_'+str(nSkip)+'.root'
+except IndexError:
+	# fileName='/mnt/hadoop/cms/store/user/paus/filefi/032/s12-zll-ptz70-100-v7c/F80A6F2F-9B39-E211-9D5E-0026189438C4.root'
+	fileName='/mnt/hadoop/cms/store/user/paus/filefi/032/s12-zll-ptz70-100-v7c/0834BAB3-D839-E211-9083-0018F3D09658.root'
+	# nBatch=10848
+	nBatch=11356
+	nSkip=0
+	outFileName = 'ntuplesMCEff_1.root'
 
 ROOT.gROOT.SetBatch(True)
 
@@ -10,10 +22,13 @@ ROOT.gSystem.Load('libMitExampleMods.so')
 
 mithep = ROOT.mithep
 
-hltMod = mithep.HLTMod()
-hltMod.SetBitsName('HLTBits')
-hltMod.SetTrigObjsName('SingleElectronTriggerObjects')
-hltMod.AddTrigger('HLT_Ele27_WP80_v*')
+print "Setting up analysis"
+analysis = mithep.Analysis()
+analysis.SetOutputName(outFileName)
+
+analysis.AddFile(fileName)
+analysis.SetProcessNEvents(nBatch)
+analysis.SetSkipFirstNEvents(nSkip)
 
 goodPVMod = mithep.GoodPVFilterMod()
 goodPVMod.SetMinVertexNTracks(0)
@@ -60,26 +75,23 @@ phoIdMod2.SetPtMin(10.0)
 phoIdMod2.SetOutputName('MediumPhotonsYesEVeto')
 phoIdMod2.SetIDType('EgammaMedium')
 phoIdMod2.SetIsoType('MITPUCorrected')
-phoIdMod2.SetApplyElectronVeto(False)
-phoIdMod2.SetApplyElectronVetoConvRecovery(True)
+phoIdMod2.SetApplyElectronVeto(True)
+phoIdMod2.SetApplyElectronVetoConvRecovery(False)
 phoIdMod2.SetApplyPixelSeed(False)
 phoIdMod2.SetApplyConversionId(False)
 phoIdMod2.SetApplyFiduciality(True)
 phoIdMod2.SetIsData(True)
 phoIdMod2.SetPhotonsFromBranch(True)
 
-ntuplesMod = mithep.NtuplesMod('NtuplesMod', 'Flat ntuples producer')
-ntuplesMod.SetPVName('GoodVertexes')
+ntuplesMod = mithep.MeasureMCEffMod('MeasureMCEffMod', 'Flat ntuples producer')
 ntuplesMod.SetTagElectronsName('TightElectrons')
 ntuplesMod.SetProbePhotonsNoVetoName('MediumPhotonsNoEVeto')
 ntuplesMod.SetProbePhotonsYesVetoName('MediumPhotonsYesEVeto')
-ntuplesMod.SetTriggerObjectsName('SingleElectronTriggerObjects')
-ntuplesMod.SetTriggerMatchName('hltEle27WP80TrackIsoFilter')
 
-analysis.AddSuperModule(hltMod)
-hltMod.Add(goodPVMod)
+analysis.AddSuperModule(goodPVMod)
 goodPVMod.Add(eleIdMod)
 eleIdMod.Add(phoIdMod)
 phoIdMod.Add(phoIdMod2)
 phoIdMod2.Add(ntuplesMod)
 
+analysis.Run(False)
